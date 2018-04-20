@@ -49,8 +49,8 @@ Before we dive into things like typeclasses and purely functional data structure
 
 You are probably familiar with how to apply a function to an `Option[A]` if it's a `Some`, and if not return a default value. You use `map` and `getOrElse`. When applied to an Option `map` applies the function if the value exists. 
 
-	scala> some(3) map { _ + 1 }
-	res0: Option[Int] = Some(4)
+	scala> some(89) map { _ + 1 }
+	res0: Option[Int] = Some(90)
 
 	scala> (none : Option[Int]) map { _ + 1 }
 	res3: Option[Int] = None
@@ -62,48 +62,48 @@ You may have noticed I'm using lowercase versions of `Some` and `None`. This is 
 
 You can also turn an instance of `A` into an `Option[A]` by calling `some` on it. This is sometimes convenient when defining a method that returns option as well.
 
-	scala> 3.some
-	res11: Option[Int] = Some(3)
+	scala> "delivered".some
+	res11: Option[String] = Some("delivered")
 
 The `getOrElse` method returns an instance of `A` on an `Option[A]` and is given to us by the standard library. Put together with map we are able to write expressions like:
 
-	scala> 3.some map { _ + 1 } getOrElse 2
-	res12: Int = 4
+	scala> 1989.some map { _ + 1 } getOrElse 2
+	res12: Int = 1990
 
-	scala> (none : Option[Int]) map { _ + 1 } getOrElse 11
-	res14: Int = 11
+	scala> (none : Option[Int]) map { _ + 1 } getOrElse 0
+	res14: Int = 0
 
 Scalaz gives us a more expressive way of writing the same expression:
 
-	scala> some(3) some { _ + 1 } none { 2 }
-	res15: Int = 4
+	scala> some(1989) some { _ + 1 } none { 2 }
+	res15: Int = 1989
 
-	scala> none[Int] some { _ + 1 } none { 11 }
-	res16: Int = 11
+	scala> none[Int] some { _ + 1 } none { 0 }
+	res16: Int = 0
 
 This statement isn't just more expressive however. It also can prevent us from doing something we didn't intend. 
 
-	scala> none[Int] some { _ + 1 } none { "11" }
+	scala> none[Int] some { _ + 1 } none { "0" }
 	<console>:14: error: type mismatch;
-	 found   : java.lang.String("11")
+	 found   : java.lang.String("0")
 	 required: Int
-           none[Int] some { _ + 1 } none { "11" }
+           none[Int] some { _ + 1 } none { "0" }
 
 Where as `getOrElse` may lead to us accidentally returning an unintended type,
 
-	scala> none[Int] getOrElse { "2" }
-	res27: Any = 2
+	scala> none[Int] getOrElse { "0" }
+	res27: Any = 0
 
 ## Checking Two Optional Values at Once
 
 Scalaz also gives us a useful way to check the existence and values of two optional values at once. In the imperative style we would probably use a set of boolean functions combined by boolean operators in an if expression or nested if expressions. That's not to say we can't and don't do this in the functional programming world but in the imperative style we are often talking about `null` handling. In Scala we have the benefit of using the `Option` type instead of `null` and it is verbose and cumbersome to use `option.isDefined` as well as extracting the value in if expressions. Another, perhaps more useful, way to work with `Option` values is to pattern match on them using `match`. We are familiar with this. But how do we check both exist at the same time. We could use a `(Option[A], Option[B])` but then there are four cases to handle two of which we dont care about. Instead we can use the `<|*|>` operator (I don't know what to call it, spaceship, bar star?) to take an `Option[A]` and an `Option[B]` and get back an `Option[(A, B)])`. If either of the two operands is `None` the resulting value will be `None`. Otherwise, they will be `Some[(A, B)])`. Now, when we pattern match we only have to handle the two cases we care about: when they both exist and otherwise. 
 
-	scala> 3.some <|*|> 2.some match {
-		| case Some((a, b)) if a == b => println("equal")
-		| case Some((_, _)) => println("not equal")
-		| case None => println("at least one doesnt exist")
+	scala> 10.some <|*|> 11.some match {
+		| case Some((startWindow, endWindow)) if startWindow == endWindow => println(s"your order will be delivered by $startWindow AM")
+		| case Some((startWindow, endWindow)) => println(s"your order will be delivered between $startWindow AM - $endWindow AM")
+		| case None => println("Sorry we dont know your delivery time")
 		| }
-	not equal
+	your order will be delivered between 10 AM - 11 AM
 
 	scala> 3.some <|*|> none[Int] match {
 		| case Some((a, b)) if a == b => println("equal")
